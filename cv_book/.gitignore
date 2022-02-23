@@ -1,0 +1,6 @@
+**__pycache__
+pyrightconfig.json
+.nvimrc
+.vscode
+.vimspector.json
+**.ipynb_checkpoints

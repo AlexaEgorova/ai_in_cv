@@ -7,7 +7,7 @@ Created on Wed Feb 23 20:02:37 2022
 import numpy  as np
 import cv2
 
-from example_1.camera import Camera
+from camera import Camera
 
 class WayEstimator:
     def __init__(self, camera: Camera):

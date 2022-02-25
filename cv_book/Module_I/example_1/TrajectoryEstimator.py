@@ -1,7 +1,7 @@
 import numpy  as np
 import cv2
 
-from camera import Camera
+from example_1.camera import Camera
 
 class  TrajectoryEstimator:
     def __init__(self, camera: Camera):

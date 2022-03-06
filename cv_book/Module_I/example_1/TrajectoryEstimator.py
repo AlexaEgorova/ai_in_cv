@@ -1,7 +1,8 @@
 import numpy  as np
 import cv2
 
-from example_1.camera import Camera
+from camera import Camera
+from point import Point3d as Point
 
 class  TrajectoryEstimator:
     def __init__(self, camera: Camera):
@@ -16,14 +17,14 @@ class  TrajectoryEstimator:
 
 
     def dray_way(self, img, high, width, depth, ):
-        left_down_2d_near = self.camera.project_point_3d_to_2d((0, 0, 0))
-        left_down_2d_far = self.camera.project_point_3d_to_2d((depth, 0, 0))
-        left_up_2d_near = self.camera.project_point_3d_to_2d((0, 0, high))
-        left_up_2d_far = self.camera.project_point_3d_to_2d((depth, 0, high))
-        right_up_2d_near = self.camera.project_point_3d_to_2d(0, width, high)
-        right_up_2d_far = self.camera.project_point_3d_to_2d(depth, width, high)
-        right_down_2d_near = self.camera.project_point_3d_to_2d(0, width, 0)
-        right_down_2d_far = self.camera.project_point_3d_to_2d(depth, width, 0)
+        left_down_2d_near = self.camera.project_point_3d_to_2d(Point((0, 0, 0)))
+        left_down_2d_far = self.camera.project_point_3d_to_2d(Point((depth, 0, 0)))
+        left_up_2d_near = self.camera.project_point_3d_to_2d(Point((0, 0, high)))
+        left_up_2d_far = self.camera.project_point_3d_to_2d(Point((depth, 0, high)))
+        right_up_2d_near = self.camera.project_point_3d_to_2d(Point((0, width, high)))
+        right_up_2d_far = self.camera.project_point_3d_to_2d(Point((depth, width, high)))
+        right_down_2d_near = self.camera.project_point_3d_to_2d(Point((0, width, 0)))
+        right_down_2d_far = self.camera.project_point_3d_to_2d(Point((depth, width, 0)))
 
         cv2.rectangle(img, left_down_2d_near, right_up_2d_near, (255, 0, 0), 5)
         cv2.rectangle(img, left_down_2d_far, right_up_2d_far, (255, 0, 0), 5)

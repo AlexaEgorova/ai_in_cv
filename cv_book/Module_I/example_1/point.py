@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 25 12:20:18 2022
-
-@author: egoro
-"""
-
 import numpy as np
 
 class Point3d:

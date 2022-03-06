@@ -4,7 +4,7 @@ from typing import Optional, List
 class CalibReader:
     _file_name: str = 'leftImage.yaml'
 
-    def initialize(self, file_name: str = '', param = list()) -> bool:
+    def __init__(self, file_name: str = '', param = list()) -> bool:
         self._file_name = file_name
         self._param = param
 

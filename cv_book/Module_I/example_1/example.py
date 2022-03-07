@@ -6,21 +6,19 @@ Created on Wed Feb 23 14:18:35 2022
 
 import cv2
 from season_reader import SeasonReader
-from way_estimator import WayEstimator
-from camera import Camera
-from calib import Calib
+from Module_I.example_1.way_estimator import WayEstimator
 from Module_I.example_calib.load_calib import CalibReader
 
 
 class MyReader(SeasonReader):
     def on_init(self):
         par = ["K", "D", "r", "t"]
-        calib_reader = CalibReader(file_name=r'C:\Users\Dns\OneDrive - НИТУ МИСиС\Документы\Учеба\Магистратура\2 семестр\OpenCV\ai_in_cv\cv_book\data\tram\leftImage.yml', param=par)
+        calib_reader = CalibReader(
+            file_name=r'../../data/tram/leftImage.yml',
+            param=par)
         calib_dict = calib_reader.read()
 
-        calib = Calib(calib_dict)
-        camera = Camera(calib)
-        self.ways = WayEstimator(camera)
+        self.ways = WayEstimator(calib_dict, 10)
         return True
 
     def on_shot(self):

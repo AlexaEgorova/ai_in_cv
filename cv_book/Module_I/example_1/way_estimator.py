@@ -4,43 +4,34 @@ Created on Wed Feb 23 20:02:37 2022
 @author: egoro
 """
 
-import numpy  as np
+import numpy as np
 import cv2
 
-from camera import Camera
-from point import Point3d as Point
+from Module_I.example_1.calib import Calib
+from Module_I.example_1.camera import Camera
+from Module_I.example_1.point import Point3d as Point
 
 class WayEstimator:
-    def __init__(self, camera: Camera):
-        self.camera = camera
-        # стаднартная ширина колеи - 1435 мм
-        # near - по x в 0 метрах
-        # far - по x в 10 в метрах
+    def __init__(self, calib_dict: np.array, ways_length: int):
+        self.calib = Calib(calib_dict)
+        self.camera = Camera(self.calib)
         self.left_3d_near = Point((-0.8, 1, 0))
-        self.left_3d_far = Point((-0.8, 25, 0))
+        self.left_3d_far = Point((-0.8, ways_length-1, 0))
         self.right_3d_near = Point((0.8, 1, 0))
-        self.right_3d_far = Point((0.8, 25, 0))
+        self.right_3d_far = Point((0.8, ways_length-1, 0))
 
     def dray_way(self, img):
         left_2d_near = self.camera.project_point_3d_to_2d(self.left_3d_near)
-        print('left_2d_near:', left_2d_near)
-
         left_2d_far = self.camera.project_point_3d_to_2d(self.left_3d_far)
-        print('left_2d_far:', left_2d_far)
-
         right_2d_near = self.camera.project_point_3d_to_2d(self.right_3d_near)
-        print('right_2d_near:', right_2d_near)
-
         right_2d_far = self.camera.project_point_3d_to_2d(self.right_3d_far)
-        print('right_2d_far:', right_2d_far)
 
-        cv2.line(img, right_2d_near, right_2d_far, (0, 0, 0), 5)
-        cv2.line(img, left_2d_near, left_2d_far, (0, 0, 0), 5)
+        black_color = (0, 0, 0)
+        line_width = 5
+        cv2.line(img, right_2d_near, right_2d_far, black_color, line_width)
+        cv2.line(img, left_2d_near, left_2d_far, black_color, line_width)
 
         return img
-
-    def __det(self, a: np.array, b: np.array):
-        return a[0] * b[1] - a[1] * b[0]
 
     def draw_coordinate_system(self, img):
         center3d = Point((0, 0, 0))

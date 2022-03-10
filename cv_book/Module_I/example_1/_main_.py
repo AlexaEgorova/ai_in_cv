@@ -17,11 +17,11 @@ if __name__ == "__main__":
     img = cv2.imread(path)
     img = cv2.resize(img, (960, 540), interpolation = cv2.INTER_AREA) # todo: зачитать из калиба sz
 
-    way_estimator = WayEstimator(calib_dict, 10)
-    img = way_estimator.dray_way(img)
+    #way_estimator = WayEstimator(calib_dict, 10)
+    #img = way_estimator.dray_way(img)
 
-    # traj_estimator = TrajectoryEstimator(camera)
-    # img = traj_estimator.dray_way(img, 1, 1, 0)
+    traj_estimator = TrajectoryEstimator(camera)
+    img = traj_estimator.dray_way(img, 15)
 
     cv2.namedWindow('reels')
     cv2.imshow('reels', img)

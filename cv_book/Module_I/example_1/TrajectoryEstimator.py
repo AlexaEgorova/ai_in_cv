@@ -1,37 +1,51 @@
-import numpy  as np
+
+import numpy as np
 import cv2
 
-from camera import Camera
-from point import Point3d as Point
+from Module_I.example_1.calib import Calib
+from Module_I.example_1.camera import Camera
+from Module_I.example_1.point import Point3d as Point
 
-class  TrajectoryEstimator:
-    def __init__(self, camera: Camera):
-        self.camera = camera
-        # стаднартная ширина колеи - 1435 мм
-        # near - по x в 0 метрах
-        # far - по x в 10 в метрах
-        self.left_3d_near = np.array((0, 0, 0))
-        self.left_3d_far = np.array((0, 0, 0))
-        self.right_3d_near = np.array((0, 0, 0))
-        self.right_3d_far = np.array((0, 0, 0))
+class TrajectoryEstimator:
+    def __init__(self, calib_dict: np.array, ways_length: int):
+        self.calib = Calib(calib_dict)
+        self.camera = Camera(self.calib)
+        self.left_3d_near1 = Point((-0.8, 10, 0))
+        self.left_3d_far1 = Point((-0.8, ways_length - 1, 0))
+        self.right_3d_near1 = Point((0.8, 10, 0))
+        self.right_3d_far1 = Point((0.8, ways_length - 1, 0))
+        self.left_3d_near_up1 = Point((-0.8, 10, 1))
+        self.left_3d_far_up1 = Point((-0.8, ways_length - 1, 1))
+        self.right_3d_near_up1 = Point((0.8, 10, 1))
+        self.right_3d_far_up1 = Point((0.8, ways_length - 1, 1))
 
+    def dray_way(self, img):
+        left_2d_near1 = self.camera.project_point_3d_to_2d(self.left_3d_near1)
+        left_2d_far1 = self.camera.project_point_3d_to_2d(self.left_3d_far1)
+        right_2d_near1 = self.camera.project_point_3d_to_2d(self.right_3d_near1)
+        right_2d_far1 = self.camera.project_point_3d_to_2d(self.right_3d_far1)
+        left_2d_near_up1 = self.camera.project_point_3d_to_2d(self.left_3d_near_up1)
+        left_2d_far_up1 = self.camera.project_point_3d_to_2d(self.left_3d_far_up1)
+        right_2d_near_up1 = self.camera.project_point_3d_to_2d(self.right_3d_near_up1)
+        right_2d_far_up1 = self.camera.project_point_3d_to_2d(self.right_3d_far_up1)
 
-    def dray_way(self, img, high, width, depth, ):
-        left_down_2d_near = self.camera.project_point_3d_to_2d(Point((0, 0, 0)))
-        left_down_2d_far = self.camera.project_point_3d_to_2d(Point((depth, 0, 0)))
-        left_up_2d_near = self.camera.project_point_3d_to_2d(Point((0, 0, high)))
-        left_up_2d_far = self.camera.project_point_3d_to_2d(Point((depth, 0, high)))
-        right_up_2d_near = self.camera.project_point_3d_to_2d(Point((0, width, high)))
-        right_up_2d_far = self.camera.project_point_3d_to_2d(Point((depth, width, high)))
-        right_down_2d_near = self.camera.project_point_3d_to_2d(Point((0, width, 0)))
-        right_down_2d_far = self.camera.project_point_3d_to_2d(Point((depth, width, 0)))
+        black_color = (0, 0, 0)
+        line_width = 5
 
-        cv2.rectangle(img, left_down_2d_near, right_up_2d_near, (255, 0, 0), 5)
-        cv2.rectangle(img, left_down_2d_far, right_up_2d_far, (255, 0, 0), 5)
-        cv2.line(img, left_down_2d_near, left_down_2d_far, (255, 0, 0), 5)
-        cv2.line(img, left_up_2d_near, left_up_2d_far, (255, 0, 0), 5)
-        cv2.line(img, right_down_2d_near, right_down_2d_far, (255, 0, 0), 5)
-        cv2.line(img, right_up_2d_near, right_up_2d_far, (255, 0, 0), 5)
+        cv2.rectangle(img, left_2d_near1, right_2d_near1, black_color, line_width)
+        cv2.rectangle(img, left_2d_far1, right_2d_far1, black_color, line_width)
+        cv2.rectangle(img, left_2d_far_up1, right_2d_far_up1, black_color, line_width)
+        cv2.rectangle(img, left_2d_near_up1, right_2d_near_up1, black_color, line_width)
+        cv2.rectangle(img, left_2d_far_up1, left_2d_far1, black_color, line_width)
+        cv2.rectangle(img, right_2d_far_up1, right_2d_far1, black_color, line_width)
+        cv2.rectangle(img, left_2d_near_up1, left_2d_near1, black_color, line_width)
+        cv2.rectangle(img, right_2d_near_up1, right_2d_near1, black_color, line_width)
+        cv2.line(img, left_2d_near1, left_2d_far1, black_color, line_width)
+        cv2.line(img, left_2d_near_up1, left_2d_far_up1, black_color, line_width)
+        cv2.line(img, right_2d_near1, right_2d_far1, black_color, line_width)
+        cv2.line(img, right_2d_near_up1, right_2d_far_up1, black_color, line_width)
+
+        return img
 
     def __det(self, a: np.array, b: np.array):
         return a[0] * b[1] - a[1] * b[0]
@@ -52,3 +66,4 @@ class  TrajectoryEstimator:
         x = self.__det(d, x_diff)
         y = self.__det(d, y_diff)
         return np.array((x, y))
+

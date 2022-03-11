@@ -5,7 +5,7 @@ from .calib import Calib
 
 
 class Camera:
-    EPS = 0.001
+    EPS = 1e-3
 
     def __init__(self, calib: Calib):
         self.calib = calib

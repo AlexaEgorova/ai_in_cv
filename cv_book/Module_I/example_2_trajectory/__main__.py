@@ -16,7 +16,11 @@ if __name__ == '__main__':
     # todo: зачитать из калиба sz
     img = cv2.resize(img, (960, 540), interpolation = cv2.INTER_AREA)
 
-    traj_estimator = TrajectoryEstimator(calib_dict, 1, 1, 25, 8)
+    traj_estimator = TrajectoryEstimator(calib_dict=calib_dict,
+                                         height=1,
+                                         wight=1.6,
+                                         depth=25,
+                                         length=8)
     img = traj_estimator.dray_trajectory(img)
 
     cv2.namedWindow('reels')

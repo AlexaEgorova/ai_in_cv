@@ -1,9 +1,16 @@
 import numpy as np
 import cv2
 
-from .calib import Calib
-from .camera import Camera
-from .point import Point3d as Point
+from Module_I.spatial_geometry_tools.calib import Calib
+from Module_I.spatial_geometry_tools.camera import Camera
+from Module_I.spatial_geometry_tools.point import Point3d as Point
+
+
+BLACK = (0, 0, 0)
+BLUE = (255, 0, 0)
+GREEN = (0, 255, 0)
+RED = (0, 0, 255)
+LINE_WIDTH = 5
 
 
 class WayEstimator:
@@ -21,10 +28,8 @@ class WayEstimator:
         right_2d_near = self.camera.project_point_3d_to_2d(self.right_3d_near)
         right_2d_far = self.camera.project_point_3d_to_2d(self.right_3d_far)
 
-        black_color = (0, 0, 0)
-        line_width = 5
-        cv2.line(img, right_2d_near, right_2d_far, black_color, line_width)
-        cv2.line(img, left_2d_near, left_2d_far, black_color, line_width)
+        cv2.line(img, right_2d_near, right_2d_far, BLACK, LINE_WIDTH)
+        cv2.line(img, left_2d_near, left_2d_far, BLACK, LINE_WIDTH)
 
         return img
 
@@ -32,7 +37,7 @@ class WayEstimator:
         center3d = Point((0, 0, 0))
         center2d = self.camera.project_point_3d_to_2d(center3d)
         print('center2d:', center2d)
-        cv2.circle(img, center2d, 5, (0, 0, 0), 5)
+        cv2.circle(img, center2d, 5, BLACK, 5)
 
         for i in range(1, 20):
             x3d = Point((i, 0, 0))
@@ -47,16 +52,16 @@ class WayEstimator:
             z2d = self.camera.project_point_3d_to_2d(z3d)
             print("z2d:", z2d)
 
-            # blue x
-            cv2.line(img, x2d, center2d, (255, 0, 0), 5)
-            cv2.circle(img, x2d, 5, (255, 0, 0), 5)
+            # x
+            cv2.line(img, x2d, center2d, BLUE, LINE_WIDTH)
+            cv2.circle(img, x2d, 5, BLUE, 5)
 
             # green y
-            cv2.line(img, y2d, center2d, (0, 255, 0), 5)
-            cv2.circle(img, y2d, 5, (0, 255, 0), 5)
+            cv2.line(img, y2d, center2d, GREEN, LINE_WIDTH)
+            cv2.circle(img, y2d, 5, GREEN, 5)
 
             # red z
-            cv2.line(img, z2d, center2d, (0, 0, 255), 5)
-            cv2.circle(img, z2d, 5, (0, 0, 255), 5)
+            cv2.line(img, z2d, center2d, RED, LINE_WIDTH)
+            cv2.circle(img, z2d, 5, RED, 5)
 
         return img

@@ -6,14 +6,18 @@ from Module_I.example_2_trajectory.trajectory_estimator import TrajectoryEstimat
 from Module_I.load_calib import CalibReader
 
 
-class MyReader2(SeasonReader):
+class ReaderForTrajectory(SeasonReader):
     def on_init(self):
         par = ['K', 'D', 'r', 't']
         calib_reader = CalibReader(
             file_name=r'../../data/tram/leftImage.yml',
             param=par)
         calib_dict = calib_reader.read()
-        self.traj_estimator = TrajectoryEstimator(calib_dict, 1, 1, 25, 8)
+        self.traj_estimator = TrajectoryEstimator(calib_dict=calib_dict,
+                                                  height=1,
+                                                  wight=1.6,
+                                                  depth=25,
+                                                  length=8)
 
         return True
 
@@ -41,7 +45,7 @@ if __name__ == "__main__":
     init_args = {
         'path_to_data_root': '../../data/tram/'
     }
-    s = MyReader2()
+    s = ReaderForTrajectory()
     s.initialize(**init_args)
     s.run()
     print('Done!')

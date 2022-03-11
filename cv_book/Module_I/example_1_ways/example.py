@@ -6,7 +6,7 @@ from Module_I.example_1_ways.way_estimator import WayEstimator
 from Module_I.load_calib import CalibReader
 
 
-class MyReader(SeasonReader):
+class ReaderForWays(SeasonReader):
     def on_init(self):
         par = ['K', 'D', 'r', 't']
         calib_reader = CalibReader(
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     init_args = {
         'path_to_data_root': '../../data/tram/'
     }
-    s = MyReader()
+    s = ReaderForWays()
     s.initialize(**init_args)
     s.run()
     print("Done!")

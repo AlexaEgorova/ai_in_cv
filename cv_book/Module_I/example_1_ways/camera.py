@@ -1,14 +1,12 @@
-"""
-Created on Wed Feb 23 20:01:56 2022
-
-@author: egoro
-"""
-
 import numpy as np
-from point import Point3d
-from calib import Calib
+
+from .point import Point3d
+from .calib import Calib
+
 
 class Camera:
+    EPS = 0.001
+
     def __init__(self, calib: Calib):
         self.calib = calib
 
@@ -21,6 +19,6 @@ class Camera:
         w = res[-1]
 
         res_2d = (0, 0)
-        if abs(w) > 0.001:
+        if abs(w) > Camera.EPS:
             res_2d = (int(res[0] / w), int(res[1] / w))
         return res_2d

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Point3d:
     def __init__(self, coords: tuple):
         self.x = coords[0]

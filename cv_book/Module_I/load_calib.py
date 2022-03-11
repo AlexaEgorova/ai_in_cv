@@ -8,7 +8,6 @@ class CalibReader:
         self._file_name = file_name
         self._param = param
 
-
     def read(self) -> str:
         file_name = self._file_name
         list_param = self._param
@@ -22,7 +21,7 @@ class CalibReader:
 
 if __name__ == "__main__":
     par = ["K", "D", "r", "t" ]
-    calib = CalibReader(file_name = r'C:\Users\Dns\OneDrive - НИТУ МИСиС\Документы\Учеба\Магистратура\2 семестр\OpenCV\ai_in_cv\cv_book\data\tram\leftImage.yml', param = par)
+    calib = CalibReader(file_name = '../data/tram/leftImage.yml', param = par)
     matrix = calib.read()
     print(matrix)
 

@@ -1,9 +1,9 @@
 import numpy as np
 import cv2
 
-from Module_I.example_1.calib import Calib
-from Module_I.example_1.camera import Camera
-from Module_I.example_1.point import Point3d as Point
+from Module_I.example_1_ways.calib import Calib
+from Module_I.example_1_ways.camera import Camera
+from Module_I.example_1_ways.point import Point3d as Point
 
 
 class TrajectoryEstimator:
@@ -19,7 +19,7 @@ class TrajectoryEstimator:
         self.right_3d_near_up1 = Point((wight/2, length, high))
         self.right_3d_far_up1 = Point((wight/2, depth, high))
 
-    def dray_way(self, img):
+    def dray_trajectory(self, img):
         left_2d_near1 = self.camera.project_point_3d_to_2d(self.left_3d_near1)
         left_2d_far1 = self.camera.project_point_3d_to_2d(self.left_3d_far1)
         right_2d_near1 = self.camera.project_point_3d_to_2d(self.right_3d_near1)

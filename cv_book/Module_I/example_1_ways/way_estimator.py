@@ -1,15 +1,10 @@
-"""
-Created on Wed Feb 23 20:02:37 2022
-
-@author: egoro
-"""
-
 import numpy as np
 import cv2
 
-from Module_I.example_1.calib import Calib
-from Module_I.example_1.camera import Camera
-from Module_I.example_1.point import Point3d as Point
+from .calib import Calib
+from .camera import Camera
+from .point import Point3d as Point
+
 
 class WayEstimator:
     def __init__(self, calib_dict: np.array, ways_length: int):
@@ -36,7 +31,7 @@ class WayEstimator:
     def draw_coordinate_system(self, img):
         center3d = Point((0, 0, 0))
         center2d = self.camera.project_point_3d_to_2d(center3d)
-        print("center2d:", center2d)
+        print('center2d:', center2d)
         cv2.circle(img, center2d, 5, (0, 0, 0), 5)
 
         for i in range(1, 20):

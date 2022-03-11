@@ -1,7 +1,7 @@
 import cv2
 
 from Module_I.load_calib import CalibReader
-from Module_I.example_2_trajectory.trajectory_estimator import TrajectoryEstimator
+from Module_I.example_4_trajectory.trajectory_estimator import TrajectoryEstimator
 
 
 if __name__ == '__main__':
@@ -17,10 +17,10 @@ if __name__ == '__main__':
     img = cv2.resize(img, (960, 540), interpolation = cv2.INTER_AREA)
 
     traj_estimator = TrajectoryEstimator(calib_dict=calib_dict,
-                                         height=1,
+                                         height=1.6,
                                          wight=1.6,
-                                         depth=25,
-                                         length=8)
+                                         length=25,
+                                         depth=8)
     img = traj_estimator.dray_trajectory(img)
 
     cv2.namedWindow('reels')

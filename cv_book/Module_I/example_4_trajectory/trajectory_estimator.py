@@ -14,17 +14,17 @@ class TrajectoryEstimator:
     '''
     Задаем калиб, высоту, ширину, глубину параллелограмма и расстояние от камеры.
     '''
-    def __init__(self, calib_dict: np.array, height, wight, depth, length: int):
+    def __init__(self, calib_dict: np.array, height, wight, length, depth: int):
         self.calib = Calib(calib_dict)
         self.camera = Camera(self.calib)
-        self.left_3d_near1 = Point((-wight/2, length, 0))
-        self.left_3d_far1 = Point((-wight/2, depth, 0))
-        self.right_3d_near1 = Point((wight/2, length, 0))
-        self.right_3d_far1 = Point((wight/2, depth, 0))
-        self.left_3d_near_up1 = Point((-wight / 2, length, height))
-        self.left_3d_far_up1 = Point((-wight / 2, depth, height))
-        self.right_3d_near_up1 = Point((wight / 2, length, height))
-        self.right_3d_far_up1 = Point((wight / 2, depth, height))
+        self.left_3d_near1 = Point((-wight / 2, depth, 0))
+        self.left_3d_far1 = Point((-wight / 2, length, 0))
+        self.right_3d_near1 = Point((wight / 2, depth, 0))
+        self.right_3d_far1 = Point((wight / 2, length, 0))
+        self.left_3d_near_up1 = Point((-wight / 2, depth, height))
+        self.left_3d_far_up1 = Point((-wight / 2, length, height))
+        self.right_3d_near_up1 = Point((wight / 2, depth, height))
+        self.right_3d_far_up1 = Point((wight / 2, length, height))
 
     def dray_trajectory(self, img):
         left_2d_near1 = self.camera.project_point_3d_to_2d(self.left_3d_near1)

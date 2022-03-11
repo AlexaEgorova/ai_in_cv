@@ -1,10 +1,10 @@
-
 import numpy as np
 import cv2
 
 from Module_I.example_1.calib import Calib
 from Module_I.example_1.camera import Camera
 from Module_I.example_1.point import Point3d as Point
+
 
 class TrajectoryEstimator:
     def __init__(self, calib_dict: np.array, high, wight, depth, length: int):  # задаем калиб, высоту, ширину, глебину параллелограмма и расстояние от камеры

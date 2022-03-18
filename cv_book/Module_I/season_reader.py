@@ -7,6 +7,7 @@ except ImportError:
 import gzip
 import cv2
 import numpy as np
+import pandas as pd
 from typing import Optional, List
 
 class SeasonReader:

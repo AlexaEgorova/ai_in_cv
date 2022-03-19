@@ -32,7 +32,7 @@ class ObjectOnWaysEstimator:
         """
         points = []
         Xs = [x for sublist in [[-width/2]*2, [width/2]*2] * 2 for x in sublist]
-        Ys = [depth, length, length, depth] * 2
+        Ys = [depth, depth+length, depth+length, depth] * 2
         Zs = [z for sublist in [[0]*4, [height]*4] for z in sublist]
         for (x, y, z) in zip(Xs, Ys, Zs):
             points.append(Point((x, y, z)))
@@ -68,7 +68,7 @@ class Reader(SeasonReader):
         self.obj_estimator = ObjectOnWaysEstimator(calib_dict=calib_dict,
                                                    height=1.6,
                                                    width=1.6,
-                                                   length=25,
+                                                   length=10,
                                                    depth=8)
         return True
 

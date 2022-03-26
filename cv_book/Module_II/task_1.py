@@ -1,25 +1,30 @@
-#Уменьшить засветку от света фар встречного автомобиля [klt.427.003]
-
+import cv2
 import numpy as np
 
-import cv2
+class CarLightsStruckReducer:
+    @staticmethod
+    def __gamma_correction(img: np.ndarray, gamma: float) -> np.ndarray:
+        look_up_table = np.empty((1,256), np.uint8)
+        for i in range(256):
+            look_up_table[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
+        res = cv2.LUT(img, look_up_table)
+        return res
 
-def reduce_car_backlights(img: np.array):
-    gamma = 0.8
-    look_up_table = np.empty((1,256), np.uint8)
-    for i in range(256):
-        look_up_table[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
-    res = cv2.LUT(img, look_up_table)
-
-    return res
+    @staticmethod
+    def reduce_light_struck(img: np.ndarray) -> np.ndarray:
+        res = CarLightsStruckReducer.__gamma_correction(img, 1.4)
+        return res
 
 
 if __name__ == '__main__':
-    img = cv2.imread('test_1.png')
-    img = cv2.resize(img, (640, 360), interpolation=cv2.INTER_AREA)
-    img_remastered = reduce_car_backlights(img)
-
-    cv2.imshow('lights', img)
-    cv2.imshow('no_lights', img_remastered)
-
-    cv2.waitKey(0)
+    video_name = 'klt.427.003.mp4'
+    cap = cv2.VideoCapture('../data/processing/' + video_name)
+    while cap.isOpened():
+        succeed, frame = cap.read()
+        if succeed:
+            frame = CarLightsStruckReducer.reduce_light_struck(frame)
+            cv2.imshow(video_name, frame)
+        else:
+            cv2.destroyAllWindows()
+            cap.release()
+        cv2.waitKey(10)

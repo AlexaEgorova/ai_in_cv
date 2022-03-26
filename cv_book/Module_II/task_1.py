@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 class CarLightsStruckReducer:
+    '''Класс для уменьшения засветки от фар встречного ТС'''
     @staticmethod
     def __gamma_correction(img: np.ndarray, gamma: float) -> np.ndarray:
         look_up_table = np.empty((1,256), np.uint8)

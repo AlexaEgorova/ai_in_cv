@@ -55,8 +55,8 @@ def reduce_light_struck(img: np.ndarray):
         overexposed = get_masked(res, overexposed_mask)
         reduced_overexposure = gamma_correction(overexposed, 1.025)
         res = apply_masked_changes(res, reduced_overexposure, overexposed_mask)
-
-    cv2.imshow('accumulative gamma correction', res)
+    return res
+    # cv2.imshow('accumulative gamma correction', res)
 
 
 def get_overexposure_map(img: np.ndarray):
@@ -114,20 +114,22 @@ if __name__ == '__main__':
     img = cv2.resize(img, (650, 350), interpolation=cv2.INTER_AREA)
     # cv2.imshow('img', img)
 
-    # reduce_light_struck(img)
+    res = reduce_light_struck(img)
+    cv2.imshow("adaptive", np.hstack((img, res)))
     # reduce_light_struck_bez_pontov(img)
     # Yana_do_smth(img)
+    cv2.waitKey()
 
-    cap = cv2.VideoCapture('../data/processing/klt.427.003.mp4')
-    count = 0
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
-            map = get_overexposure_map(frame)
-            # frame = apply_overexposure_map_by_channgels(frame, map)
-            frame = reduce_light_struck_bez_pontov(frame)
-            cv2.imshow('klt.427.003.mp4', frame)
-            count = count + 1
-        cv2.waitKey(5)
-    cap.release()
-    cv2.destroyAllWindows()  # destroy all opened windows
+    # cap = cv2.VideoCapture('../data/processing/klt.427.003.mp4')
+    # count = 0
+    # while cap.isOpened():
+    #     ret, frame = cap.read()
+    #     if ret:
+    #         map = get_overexposure_map(frame)
+    #         # frame = apply_overexposure_map_by_channgels(frame, map)
+    #         frame = reduce_light_struck_bez_pontov(frame)
+    #         cv2.imshow('klt.427.003.mp4', frame)
+    #         count = count + 1
+    #     cv2.waitKey(5)
+    # cap.release()
+    # cv2.destroyAllWindows()  # destroy all opened windows

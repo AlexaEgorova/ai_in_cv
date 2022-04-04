@@ -116,6 +116,7 @@ if __name__ == '__main__':
 
     res = reduce_light_struck(img)
     cv2.imshow("adaptive", np.hstack((img, res)))
+    reduce_light_struck(img)
     # reduce_light_struck_bez_pontov(img)
     # Yana_do_smth(img)
     cv2.waitKey()

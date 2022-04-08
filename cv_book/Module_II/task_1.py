@@ -14,35 +14,31 @@ class LightsStruckReducer:
         return res
 
     @staticmethod
-    def get_map_mask(img, radius):
+    def get_map_mask(img):
         """Получение маски на основе карты расстояний до источника засветки"""
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        overexposure_mask = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)[1]
-        reversed_mask = cv2.bitwise_not(overexposure_mask)
-        dist = cv2.distanceTransform(reversed_mask,
+        overexposed_mask = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)[1]
+        overexposed_mask_inv = cv2.bitwise_not(overexposed_mask)
+        dist = cv2.distanceTransform(overexposed_mask_inv,
                                      cv2.DIST_L2,
                                      cv2.DIST_MASK_3,
-                                     reversed_mask)
-        cv2.normalize(dist, dist, 0.0, radius, cv2.NORM_MINMAX)
-
-        reversed_map_mask = np.zeros(dist.shape, dtype=np.uint8)
-        reversed_map_mask[np.where(dist > 1)] = 255
-
+                                     overexposed_mask_inv)
+        cv2.normalize(dist, dist, 0.0, 20.0, cv2.NORM_MINMAX)
+        map_mask_inv = np.zeros(dist.shape, dtype=np.uint8)
+        map_mask_inv[np.where(dist > 1)] = 255
         map_mask = np.zeros(dist.shape, dtype=np.uint8)
-        map_mask[np.where(reversed_map_mask == 0)] = 255
-
+        map_mask[np.where(map_mask_inv == 0)] = 255
         return map_mask
 
     @staticmethod
-    def reduce(img):
+    def reduce_lights_struck(img: np.ndarray) -> np.ndarray:
         res = img.copy()
-        for radius in range(20, 21):
-            overexposed_mask = LightsStruckReducer.get_map_mask(res, radius)
-            mask_inv = cv2.bitwise_not(overexposed_mask)
-            source = cv2.bitwise_and(res, res, mask=mask_inv)
-            res = cv2.bitwise_and(res, res, mask=overexposed_mask)
-            res = LightsStruckReducer.gamma_correction(res, 1.06)
-            res = cv2.add(source, res)
+        overexposed_mask = LightsStruckReducer.get_map_mask(res)
+        mask_inv = cv2.bitwise_not(overexposed_mask)
+        non_overexposed_part = cv2.bitwise_and(res, res, mask=mask_inv)
+        overexposed_part = cv2.bitwise_and(res, res, mask=overexposed_mask)
+        corrected = LightsStruckReducer.gamma_correction(overexposed_part, 1.06)
+        res = cv2.add(non_overexposed_part, corrected)
         return res
 
 
@@ -52,7 +48,7 @@ if __name__ == '__main__':
     while cap.isOpened():
         succeed, frame = cap.read()
         if succeed:
-            frame = LightsStruckReducer.reduce(frame)
+            frame = LightsStruckReducer.reduce_lights_struck(frame)
             cv2.imshow(video_name, frame)
         else:
             cv2.destroyAllWindows()

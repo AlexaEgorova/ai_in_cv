@@ -27,7 +27,7 @@ class countPoints:
         print(Ti1)
         return Ti1
 
-    #отрисовывает точки на изображениях
+    #отрисовывает точки на изображении, старые и новые
     def perv_points_pojection_to_new(self, img):
         new_Harris = self.apply_Harris(img)
         # Бинаризация для контроля количества точек, может варьироваться в зависимости от задачи
@@ -40,12 +40,17 @@ class countPoints:
     def get_3d_points_on_land(self, img):
         left_3d_near = Point((0, 4, 0))
         left_3d_far = Point((0, 5, 0))
-        cv2.line(img, self.camera.project_point_3d_to_2d(left_3d_near), self.camera.project_point_3d_to_2d(left_3d_far), (0, 0, 0), 5)
-        # cv2.line(img, self.project_point_2d_to_3d([5, 5]), self.project_point_2d_to_3d([6, 6]), (255, 0, 0), 5)
-        print(self.project_point_2d_to_3d([5, 5]))
+        left_2d_near = self.camera.project_point_3d_to_2d(left_3d_near)
+        left_2d_far = self.camera.project_point_3d_to_2d(left_3d_far)
+        #проверка, что преобразования возвращают одно и то же
+        print(self.project_point_2d_to_3d([453, 530]))
+        print(left_2d_near)
+        print(self.project_point_2d_to_3d([458, 470]))
+        print(left_2d_far)
         return img
 
     def project_point_2d_to_3d(self, point2d: []):
+        #тут в комментариях метод перевода из 3d в 2d
         # rotated = np.array(self.calib.r) @ np.array(point3d.vec)
         # rotated = rotated - self.calib.t
         #
@@ -58,11 +63,14 @@ class countPoints:
         #     res_2d = (int(res[0] / w), int(res[1] / w))
         # return res_2d
 
-        Rt = np.insert(np.delete(np.array(self.calib.r).reshape(3, 3), [2], 1), [-1], self.calib.t, 1)
+#тут попытка получить 3d по формулам, выраженным из учебника по opencv с. 557
+        Rt = np.hstack([self.calib.r.astype('float')[:, :2], self.calib.t])
         H = self.calib.K @ Rt
-        point3d = np.array([1, 1], dtype=float)
-        # point3d = np.linalg.inv(H) @ point2d
-        print(self.calib.r.reshape((3, 3)))
+        point2d = np.append(point2d, 1)
+        point3d = np.linalg.inv(H) @ point2d
+        point3d = point3d * (1 / point3d[-1])   #
+
+
         return point3d
 
 

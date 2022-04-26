@@ -31,7 +31,11 @@ class WayEstimator:
         right_2d_far = self.camera.project_point_3d_to_2d(self.right_3d_far)
         cv2.line(img, right_2d_near, right_2d_far, BLACK, LINE_WIDTH)
         cv2.line(img, left_2d_near, left_2d_far, BLACK, LINE_WIDTH)
+        print(left_2d_far, left_2d_near, right_2d_near, right_2d_far)
         return img
+
+
+
 
 
 class Reader(SeasonReader):

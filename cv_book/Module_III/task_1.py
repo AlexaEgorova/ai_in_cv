@@ -1,21 +1,29 @@
-import cv2
-import numpy as np
 from Module_I.season_reader import SeasonReader
 from Module_I.load_calib import CalibReader
 from Module_I.spatial_geometry_tools.calib import Calib
 from Module_I.spatial_geometry_tools.camera import Camera
 from Module_I.spatial_geometry_tools.point import Point3d as Point
 
-class countPoints:
+import cv2
+import numpy as np
+
+
+class PointsCounter:
 
     def __init__(self, calib_dict):
         self.prev_points = np.ndarray(list())
         self.calib = Calib(calib_dict)
         self.camera = Camera(self.calib)
 
-    # Ri - точки на исходном кадре, Ti - начальная точка пути, tii1 - пройденный путь по GPS, yaw, yawi1 - исходный и следующий угол yaw по GPS
-    def countPointMoving(self, Ri, Ti, tii1, yawi, yawi1): #рассмотреть только точки в плоскости дороги(плоскость земля)
+    def count_point_moving(self, Ri, Ti, tii1, yawi, yawi1):
+        """
+        Рассмотрение точек в плоскости земли.
 
+        Ri - точки на исходном кадре,
+        Ti - начальная точка пути,
+        tii1 - пройденный путь по GPS,
+        yaw, yawi1 - исходный и следующий угол yaw по GPS
+        """
         # Rz = np.array([
         #     [np.cos(yawi1 - yawi), -np.sin(yawi1 - yawi), 0],
         #     [np.sin(yawi1 - yawi), np.cos(yawi1 - yawi), 0],
@@ -27,10 +35,11 @@ class countPoints:
         print(Ti1)
         return Ti1
 
-    #отрисовывает точки на изображении, старые и новые
-    def perv_points_pojection_to_new(self, img):
+    def perv_points_projection_to_new(self, img):
+        """Отрисовка точкек на изображении - старых и новых"""
         new_Harris = self.apply_Harris(img)
-        # Бинаризация для контроля количества точек, может варьироваться в зависимости от задачи
+        # бинаризация для контроля количества точек
+        # может варьироваться в зависимости от задачи
         img[new_Harris > 0.01 * new_Harris.max()] = [0, 0, 255]
         img[self.prev_points > 0.01 * self.prev_points.max()] = [0, 255, 0]
         self.prev_points = new_Harris
@@ -38,14 +47,15 @@ class countPoints:
         return img
 
     def get_3d_points_on_land(self, img):
+        """Функция проверки"""
         left_3d_near = Point((0, 4, 0))
         left_3d_far = Point((0, 5, 0))
         left_2d_near = self.camera.project_point_3d_to_2d(left_3d_near)
         left_2d_far = self.camera.project_point_3d_to_2d(left_3d_far)
-        #проверка, что преобразования возвращают одно и то же
-        print(self.project_point_2d_to_3d([453, 530]))
+        # проверка, что преобразования возвращают одно и то же
+        print(self.reproject_point_2d_to_3d_on_floor([453, 530]))
         print(left_2d_near)
-        print(self.project_point_2d_to_3d([458, 470]))
+        print(self.reproject_point_2d_to_3d_on_floor([458, 470]))
         print(left_2d_far)
         return img
 
@@ -72,13 +82,17 @@ class countPoints:
         reprojected = Point((p_[0] / p_[2], p_[1] / p_[2], h))
         return reprojected
 
-
-    #Детектор Хариса, принимает BGR изображение, возвращает изображение в GrayScale с отметкой углов и
     def apply_Harris(self, img):
+        """
+        Детектор Харриса.
+
+        Принимает BGR изображение,
+        возвращает изображение в GrayScale с отметкой углов
+        """
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = np.float32(gray)
         dst = cv2.cornerHarris(gray, 2, 3, 0.15)
-        #дилатация для отметки углов
+        # дилатация для отметки углов
         dst = cv2.dilate(dst, None)
         return dst
 
@@ -92,7 +106,7 @@ class Reader(SeasonReader):
             file_name='../data/tram/leftImage.yml',
             param=par)
         calib_dict = calib_reader.read()
-        self.counter = countPoints(calib_dict)
+        self.counter = PointsCounter(calib_dict)
         return True
 
     def on_shot(self):

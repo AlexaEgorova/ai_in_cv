@@ -49,29 +49,28 @@ class countPoints:
         print(left_2d_far)
         return img
 
-    def project_point_2d_to_3d(self, point2d: []):
-        #тут в комментариях метод перевода из 3d в 2d
-        # rotated = np.array(self.calib.r) @ np.array(point3d.vec)
-        # rotated = rotated - self.calib.t
-        #
-        # vr_cs = self.calib.cam_to_vr @ rotated
-        # res = self.calib.K @ vr_cs
-        # w = res[-1]
-        #
-        # res_2d = (0, 0)
-        # if abs(w) > Camera.EPS:
-        #     res_2d = (int(res[0] / w), int(res[1] / w))
-        # return res_2d
+    @staticmethod
+    def get_A_from_P_on_floor(P: np.ndarray) -> np.ndarray:
+        """Значения первых двух столбцов неизменны, последние два столбца складываются"""
+        h = 0 # процекция по земле, следовательно высота нулевая
+        A = np.zeros((3, 3))
+        A[0, 0], A[0, 1], A[0, 2] = P[0, 0], P[0, 1], h * P[0, 2] + P[0, 3]
+        A[1, 0], A[1, 1], A[1, 2] = P[1, 0], P[1, 1], h * P[1, 2] + P[1, 3]
+        A[2, 0], A[2, 1], A[2, 2] = P[2, 0], P[2, 1], h * P[2, 2] + P[2, 3]
+        return A
 
-#тут попытка получить 3d по формулам, выраженным из учебника по opencv с. 557
-        Rt = np.hstack([self.calib.r.astype('float')[:, :2], self.calib.t])
-        H = self.calib.K @ Rt
-        point2d = np.append(point2d, 1)
-        point3d = np.linalg.inv(H) @ point2d
-        point3d = point3d * (1 / point3d[-1])   #
-
-
-        return point3d
+    def reproject_point_2d_to_3d_on_floor(self, point2d: None):
+        if point2d is None:
+            point2d = []
+        h = 0 # процекция по земле, следовательно высота нулевая
+        R = self.calib.cam_to_vr @ self.calib.r # меняем местами оси
+        affine_matrix = np.concatenate((R, -R @ self.calib.t), 1)
+        P = self.calib.K @ affine_matrix
+        A = self.get_A_from_P_on_floor(P)
+        A_inv = np.linalg.inv(A)
+        p_ = A_inv @ Point((point2d[0], point2d[1], 1)).vec
+        reprojected = Point((p_[0] / p_[2], p_[1] / p_[2], h))
+        return reprojected
 
 
     #Детектор Хариса, принимает BGR изображение, возвращает изображение в GrayScale с отметкой углов и

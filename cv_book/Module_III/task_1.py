@@ -11,11 +11,15 @@ import numpy as np
 class PointsCounter:
 
     def __init__(self, calib_dict):
-        self.prev_points = np.ndarray(list())
+        self.prev_points = np.array([])
         self.calib = Calib(calib_dict)
         self.camera = Camera(self.calib)
+        self.gps = []
+        self.speed = 0
+        self.left_2d_far = self.camera.project_point_3d_to_2d(Point((-1.5, 12, 0)))
+        self.right_2d_far = self.camera.project_point_3d_to_2d(Point((1.5, 12, 0)))
 
-    def count_point_moving(self, Ri, Ti, tii1, yawi, yawi1):
+    def count_point_moving(self, Ri, tii1, yawi = 0, yawi1 = 0):
         """
         Рассмотрение точек в плоскости земли.
 
@@ -31,33 +35,58 @@ class PointsCounter:
         # ], dtype=object)
         #
         # Ri1 = Ri @ Rz @ Ri
-        Ti1: object = Ti + Ri * tii1    #Ri1
-        print(Ti1)
-        return Ti1
+        # for x in Ri.shape[1]:
+        #     for y in Ri.shape[0]:
+        #         if(Ri[y, x] > 0):
+        #             Ri[y, x] = self.camera.project_point_3d_to_2d(self.reproject_point_2d_to_3d_on_floor([x, y]) + tii1)
+
+        RRi = []
+        tii1 = np.array([[tii1[0]], [tii1[1]], [tii1[2]]])  # по идее, это вектор смещения
+        for i in Ri:
+            i.vec = i.vec + tii1    # смещение текущих точек
+            a = self.camera.project_point_3d_to_2d(i)     # проецирование из 3d в 2d
+            # проверка, что погрешность не выходит за рамки массива
+            if a[0] < 540 and a[1] < 540:
+                RRi.append(a)   # сохраняем точку
+        return RRi
 
     def perv_points_projection_to_new(self, img):
         """Отрисовка точкек на изображении - старых и новых"""
+        # Харис для текущего изображения
         new_Harris = self.apply_Harris(img)
-        # бинаризация для контроля количества точек
-        # может варьироваться в зависимости от задачи
+        # время для расчета пути, идея бредовая не знаю откуда брать смещение
+        time = 0.002
+        # работа с точками с предыдущего кадра
+        if self.prev_points.size > 0:
+            # расчет перемещения точек с предыдущего кадра
+            a = np.array(self.count_point_moving(self.get_3d_points_on_land(self.prev_points), [0, time * self.speed, 0. ]))
+            # отрисовка рассчитанных точек синим
+            img[a[:, 0], a[:, 1]] = [255, 0, 0]
+            # отрисовака предыдущих точек зеленым
+            img[self.prev_points > 0.01 * self.prev_points.max()] = [0, 255, 0]
+        #отрисовка текущих точек красным
         img[new_Harris > 0.01 * new_Harris.max()] = [0, 0, 255]
-        img[self.prev_points > 0.01 * self.prev_points.max()] = [0, 255, 0]
+        # сохранение текущих точек для следующего кадра
         self.prev_points = new_Harris
-        img[239:240] = [255, 0, 0]
+
         return img
 
-    def get_3d_points_on_land(self, img):
-        """Функция проверки"""
-        left_3d_near = Point((0, 4, 0))
-        left_3d_far = Point((0, 5, 0))
-        left_2d_near = self.camera.project_point_3d_to_2d(left_3d_near)
-        left_2d_far = self.camera.project_point_3d_to_2d(left_3d_far)
-        # проверка, что преобразования возвращают одно и то же
-        print(self.reproject_point_2d_to_3d_on_floor([453, 530]))
-        print(left_2d_near)
-        print(self.reproject_point_2d_to_3d_on_floor([458, 470]))
-        print(left_2d_far)
-        return img
+    def get_3d_points_on_land(self, new_Harris):
+        """Функция отсечения точек не принадлежащих выбранному участку земли"""
+        # отсечение выбранного участка на дороге
+        new_Harris[:self.left_2d_far[1], :] = 0
+        new_Harris[:, :self.left_2d_far[0]] = 0
+        new_Harris[:, self.right_2d_far[0]:] = 0
+        cv2.imshow('new Harris', new_Harris)
+
+        # уровень важности точек
+        pointsImportance = 0.01 * new_Harris.max()
+        # получение координат точек проходящих по уровню
+        points = np.argwhere(new_Harris > pointsImportance)
+        # получение 3d координат точек
+        points = np.apply_along_axis(self.reproject_point_2d_to_3d_on_floor, 1, points)
+
+        return points
 
     @staticmethod
     def get_A_from_P_on_floor(P: np.ndarray) -> np.ndarray:
@@ -69,7 +98,9 @@ class PointsCounter:
         A[2, 0], A[2, 1], A[2, 2] = P[2, 0], P[2, 1], h * P[2, 2] + P[2, 3]
         return A
 
+#TODO: будет здорово, если какие-то матрицы можно предрасчитать и сохранить, тяжело для видео
     def reproject_point_2d_to_3d_on_floor(self, point2d: None):
+        """Проецирование 2d точек, принадлежащих плоскости земли в 3d координаты"""
         if point2d is None:
             point2d = []
         h = 0 # процекция по земле, следовательно высота нулевая
@@ -115,16 +146,17 @@ class Reader(SeasonReader):
     def on_frame(self):
         cv2.putText(self.frame, f'GrabMsec: {self.frame_grab_msec}', (15, 50),
                     cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 255, 0), 2)
+        self.counter.perv_points_projection_to_new(self.frame)
         #countPoints.countPointMoving(np.array([50,-50]), 0, self.shot[])
-        self.counter.get_3d_points_on_land(self.frame)
-        #self.counter.perv_points_pojection_to_new(self.frame)
+        # self.counter.get_3d_points_on_land(self.frame)
+
         return True
 
     def on_gps_frame(self):
         shot: dict = self.shot[self._gps_name]['senseData']
         shot['grabMsec'] = self.shot[self._gps_name]['grabMsec']
-        # print(self.shot[self._gps_name]['senseData']['yaw'])         #[['yaw', 'timestamp', 'nord', 'west']])
-        # print('--------')
+        print(self.shot)         #[['yaw', 'timestamp', 'nord', 'west']])
+        self.counter.speed = self.shot[self._gps_name]['senseData']['speed']
         return True
 
     def on_imu_frame(self):

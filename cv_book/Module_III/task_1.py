@@ -52,10 +52,13 @@ class PointsCounter:
 
     def perv_points_projection_to_new(self, img):
         """Отрисовка точкек на изображении - старых и новых"""
-        # Харис для текущего изображения
+        # Харис для текущего изображения + обрезка лишних точек
         new_Harris = self.apply_Harris(img)
+        new_Harris[:self.left_2d_far[1], :] = 0
+        new_Harris[:, :self.left_2d_far[0]] = 0
+        new_Harris[:, self.right_2d_far[0]:] = 0
         # время для расчета пути, идея бредовая не знаю откуда брать смещение
-        time = 0.002
+        time = 0.02 * 10 / 36
         # работа с точками с предыдущего кадра
         if self.prev_points.size > 0:
             # расчет перемещения точек с предыдущего кадра

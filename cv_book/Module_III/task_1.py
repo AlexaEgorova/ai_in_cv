@@ -119,24 +119,6 @@ class PointsCounter:
         z = h
         return Point((x, y, z))
 
-    def check1(self, img):
-        pt3d = Point((-1, 15, 0))
-        pt2d = self.camera.project_point_3d_to_2d(pt3d)
-        pt3d_new = self.reproject_point_2d_to_3d_on_floor(pt2d)
-        pt2d_new = self.camera.project_point_3d_to_2d(pt3d_new)
-        cv2.circle(img, pt2d, 2, (255, 0, 0), 2, 1, 1)
-        cv2.circle(img, pt2d_new, 2, (0, 255, 0), 2, 1, 1)
-        return img
-
-    def check2(self, img):
-        pt3d = Point((2, 15.5, 0))
-        pt2d = self.camera.project_point_3d_to_2d(pt3d)
-        pt3d_new = self.reproject_point_2d_to_3d_on_floor(pt2d)
-        pt2d_new = self.camera.project_point_3d_to_2d(pt3d_new)
-        cv2.circle(img, pt2d, 2, (255, 0, 0), 2, 1, 1)
-        cv2.circle(img, pt2d_new, 2, (0, 255, 0), 2, 1, 1)
-        return img
-
     def count_matrix_for_2d_3d_projection(self):
         """Предрасчет матриц, необходимых для проецирования точек из 2d в 3d"""
         R = self.calib.cam_to_vr @ self.calib.r  # Изменение порядка осей

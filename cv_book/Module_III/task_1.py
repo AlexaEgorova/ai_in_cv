@@ -18,67 +18,85 @@ class PointsCounter:
         self.speed = 0
         self.left_2d_far = self.camera.project_point_3d_to_2d(Point((-1.5, 12, 0)))
         self.right_2d_far = self.camera.project_point_3d_to_2d(Point((1.5, 12, 0)))
-        self.A_inv = self.count_matrix_for_2d_3d_projection();
-        self.pointsImportance = point_importance  # уровень отсечения точек
+        self.A_inv = self.count_matrix_for_2d_3d_projection()
+        self.points_importance = point_importance  # Уровень отсечения точек
         self.yaw = 0;
 
-    def count_point_moving(self, Ri, tii1, yawi=0):
+    def count_point_moving(self, Ri, t_ii1, yaw_i: int = 0):
         """
         Рассмотрение точек в плоскости земли.
 
-        Ri - точки на исходном кадре,
-        Ti - начальная точка пути,
-        tii1 - пройденный путь по GPS,
-        yaw, yawi1 - исходный и следующий угол yaw по GPS
+        Аргументы:
+        Ri -- точки на исходном кадре,
+        Ti -- начальная точка пути,
+        tii1 -- пройденный путь по GPS,
+        yawi -- угол yaw по GPS (default 0)
         """
 
         Rz = np.array([  # Матрица преобразований при повороте на угол yaw из gps
-            [np.cos(yawi), -np.sin(yawi), 0],
-            [np.sin(yawi), np.cos(yawi), 0],
+            [np.cos(yaw_i), -np.sin(yaw_i), 0],
+            [np.sin(yaw_i), np.cos(yaw_i), 0],
             [0, 0, 1],
         ])
 
-        RRi = []
-        tii1 = np.array([[tii1[0]], [tii1[1]], [tii1[2]]])  # вектор смещения
+        RR_i = []
+        t_ii1 = np.array([[t_ii1[0]], [t_ii1[1]], [t_ii1[2]]])  # Вектор смещения
         for i in Ri:
-            i.vec = Rz @ (i.vec + tii1)  # смещение текущих точек
+            i.vec = Rz @ (i.vec + t_ii1)  # Смещение текущих точек
             a = self.camera.project_point_3d_to_2d(i)
 
-            if a[0] < 540 and a[1] < 540:  # проверка, что погрешность не выходит за рамки массива
-                RRi.append(a)
-        return RRi
+            # Проверка, что погрешность не выходит за рамки массива
+            if a[0] < 540 and a[1] < 540:
+                RR_i.append(a)
+        return RR_i
 
     def perv_points_projection_to_new(self, img):
         """Отрисовка точкек на изображении - старых и новых"""
-        new_Harris = self.apply_Harris(
-            img)  # применение детектора Хариса для текущего изображения + обрезка лишних точек
+        # Применение детектора Хариса для текущего изображения
+        # И обрезка лишних точек
+        new_Harris = self.apply_Harris(img)
         new_Harris[:self.left_2d_far[1], :] = 0
         new_Harris[:, :self.left_2d_far[0]] = 0
         new_Harris[:, self.right_2d_far[0]:] = 0
 
-        time = 0.02 * 10 / 36  # время для расчета пути (с переводом в м/с)
-        if self.prev_points.size > 0:  # работа с точками из предыдущего кадра
+        time = 0.02 * 10 / 36  # Время для расчета пути (с переводом в м/с)
+
+        # Работа с точками из предыдущего кадра
+        if self.prev_points.size > 0:
             a = np.array(
-                self.count_point_moving(self.get_3d_points_on_land(self.prev_points), [0, time * self.speed, 0.]))
+                self.count_point_moving(
+                    self.get_3d_points_on_land(self.prev_points),
+                    [0, time * self.speed, 0.]))
             if a.size != 0:
-                img[a[:, 0], a[:, 1]] = [255, 0, 0]  # отрисовка рассчитанных точек синим
-            img[self.prev_points > self.pointsImportance * self.prev_points.max()] = [0, 255,
-                                                                                      0]  # отрисовака предыдущих точек зеленым
-        img[new_Harris > self.pointsImportance * new_Harris.max()] = [0, 0, 255]  # отрисовка текущих точек красным
-        self.prev_points = new_Harris  # сохранение текущих точек для следующего кадра
+                # Отрисовка рассчитанных точек синим
+                img[a[:, 0], a[:, 1]] = [255, 0, 0]
+            # Отрисовка предыдущих точек зеленым
+            img[self.prev_points
+                > self.points_importance * self.prev_points.max()] = [0, 255, 0]
+        # Отрисовка текущих точек красным
+        img[new_Harris > self.points_importance * new_Harris.max()] = [0, 0, 255]
+
+        # Сохранение текущих точек для следующего кадра
+        self.prev_points = new_Harris
         return img
 
     def get_3d_points_on_land(self, new_Harris):
         """Функция отсечения точек не принадлежащих выбранному участку земли"""
-        points = np.argwhere(
-            new_Harris > self.pointsImportance * new_Harris.max())  # получение координат точек проходящих по уровню
-        points = np.apply_along_axis(self.reproject_point_2d_to_3d_on_floor, 1, points)  # получение 3d координат точек
+        # Получение координат точек проходящих по уровню
+        points = np.argwhere(new_Harris
+            > self.points_importance * new_Harris.max())
+        # Получение 3d координат точек
+        points = np.apply_along_axis(
+            self.reproject_point_2d_to_3d_on_floor, 1, points)
         return points
 
     @staticmethod
     def get_A_from_P_on_floor(P: np.ndarray) -> np.ndarray:
-        """Значения первых двух столбцов неизменны, последние два столбца складываются"""
-        h = 0  # процекция по земле, следовательно высота нулевая
+        """
+        Значения первых двух столбцов неизменны,
+        последние два столбца складываются
+        """
+        h = 0  # Процекция по земле, следовательно высота нулевая
         A = np.zeros((3, 3))
         A[0, 0], A[0, 1], A[0, 2] = P[0, 0], P[0, 1], h * P[0, 2] + P[0, 3]
         A[1, 0], A[1, 1], A[1, 2] = P[1, 0], P[1, 1], h * P[1, 2] + P[1, 3]
@@ -86,17 +104,42 @@ class PointsCounter:
         return A
 
     def reproject_point_2d_to_3d_on_floor(self, point2d: None):
-        """Проецирование 2d точек, принадлежащих плоскости земли в 3d координаты"""
+        """
+        Проецирование 2d точек в 3d координаты.
+
+        (Только для точек, принадлежащих плоскости земли.)
+        """
         if point2d is None:
             point2d = []
-        h = 0  # процекция по земле, следовательно высота нулевая
+        h = 0  # Процекция по земле, следовательно высота нулевая
         p_ = self.A_inv @ Point((point2d[0], point2d[1], 1)).vec
-        reprojected = Point((p_[0] / p_[2], p_[1] / p_[2], h))
-        return reprojected
+        error = abs(self.calib.t)/2 # Погрешность перевода между С.К.
+        x = p_[0] / p_[2] + error[0]
+        y = p_[1] / p_[2] + error[1]
+        z = h
+        return Point((x, y, z))
+
+    def check1(self, img):
+        pt3d = Point((-1, 15, 0))
+        pt2d = self.camera.project_point_3d_to_2d(pt3d)
+        pt3d_new = self.reproject_point_2d_to_3d_on_floor(pt2d)
+        pt2d_new = self.camera.project_point_3d_to_2d(pt3d_new)
+        cv2.circle(img, pt2d, 2, (255, 0, 0), 2, 1, 1)
+        cv2.circle(img, pt2d_new, 2, (0, 255, 0), 2, 1, 1)
+        return img
+
+    def check2(self, img):
+        pt3d = Point((2, 15.5, 0))
+        pt2d = self.camera.project_point_3d_to_2d(pt3d)
+        pt3d_new = self.reproject_point_2d_to_3d_on_floor(pt2d)
+        pt2d_new = self.camera.project_point_3d_to_2d(pt3d_new)
+        cv2.circle(img, pt2d, 2, (255, 0, 0), 2, 1, 1)
+        cv2.circle(img, pt2d_new, 2, (0, 255, 0), 2, 1, 1)
+        return img
 
     def count_matrix_for_2d_3d_projection(self):
         """Предрасчет матриц, необходимых для проецирования точек из 2d в 3d"""
-        R = self.calib.cam_to_vr @ self.calib.r  # меняем местами оси
+        R = self.calib.cam_to_vr @ self.calib.r  # Изменение порядка осей
         affine_matrix = np.concatenate((R, -R @ self.calib.t), 1)
         P = self.calib.K @ affine_matrix
         A = self.get_A_from_P_on_floor(P)
@@ -108,7 +151,7 @@ class PointsCounter:
         Детектор Харриса.
 
         Принимает BGR изображение,
-        возвращает изображение в GrayScale с отметкой углов
+        возвращает изображение в GrayScale с отметкой углов.
         """
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = np.float32(gray)
@@ -137,7 +180,6 @@ class Reader(SeasonReader):
         cv2.putText(self.frame, f'GrabMsec: {self.frame_grab_msec}', (15, 50),
                     cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 255, 0), 2)
         self.counter.perv_points_projection_to_new(self.frame)
-
         return True
 
     def on_gps_frame(self):

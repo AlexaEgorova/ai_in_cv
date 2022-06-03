@@ -7,9 +7,6 @@ import numpy as np
 
 
 class FindHorizont:
-    def __init__(self):
-        self.line = []
-        self.intersection_points = {}
 
     def line_intersection(self, line1, line2):
         xdiff = (line1[0] - line1[2], line2[0] - line2[2])
@@ -43,30 +40,24 @@ class FindHorizont:
                                 maxLineGap=250).squeeze()  # поиск линий с помощью Хаффа
         roads = lines[(lines[:, 0] < 650) & (lines[:, 0] > 300) & (lines[:, 2] < 650) & (
                 lines[:, 2] > 300)]  # отсеивание линий, не принадлежащих рельсам
+        intersection_points = {}
         for i in roads:
             for j in roads:
                 if i.all() != j.all():
                     x, y = self.line_intersection(i, j)  # поиск точки пересечения линий
                     if (x >= 0 & x < img.shape[1] & y >= 0 & y < img.shape[
                         0]):  # отсеиваем точки, не принадлежащие изображению
-                        self.intersection_points[(x, y)] = self.intersection_points.setdefault((x, y),
-                                                                                               0) + 1  # счиатем сколько прямых пересеклось в этой точке
+                        intersection_points[(x, y)] = intersection_points.setdefault((x, y),
+                                                                                     0) + 1  # счиатем сколько прямых пересеклось в этой точке
                         cv2.line(img, (i[0], i[1]), (i[2], i[3]), (255, 0, 0), 3)  # рисуем линии
-                        cv2.line(img, (j[0], j[1]), (j[2], j[3]), (255, 0, 0), 3)  # рисуем точку пересечения
-        if len(self.intersection_points):
-            point = max(self.intersection_points,
-                        key=self.intersection_points.get)  # находим точку, в которой больше всего пересечений
-            cv2.circle(img, [point[0], point[1]], 5, (0, 255, 0))  # рисуем точку пересечения
-            horizonts = []
-            for i in lines:
-                if self.belong_to_line(i[0], i[1], i[2], i[3], point[0], point[
-                    1]):  # линии, проходящие через точку пересечения, претенденты на линию горизонта
-                    horizonts.append(i)  # если линия найдена, то сохраняем
-            if len(horizonts) != 0:  #
-                # print(min(self.intersection_points, key=abs(self.intersection_points[1] - self.intersection_points[3])))
-                self.line = horizonts[0]
-        if len(self.line) == 4:  # отрисовываем сохраненную
-            cv2.line(img, (self.line[0], self.line[1]), (self.line[2], self.line[3]), (0, 0, 255), 3)
+                        cv2.line(img, (j[0], j[1]), (j[2], j[3]), (255, 0, 0), 3)  # рисуем точку пересечения двух линий
+        if len(intersection_points):
+            point = max(intersection_points,
+                        key=intersection_points.get)  # находим точку, в которой больше всего пересечений
+            cv2.circle(img, [point[0], point[1]], 5,
+                       (0, 255, 0))  # рисуем точку пересечения, где пересектось больше всего линий
+            cv2.line(img, (0, point[1]), (img.shape[1], point[1]), (0, 255, 0), 2)
+            print(img.shape)
 
 
 class Reader(SeasonReader):

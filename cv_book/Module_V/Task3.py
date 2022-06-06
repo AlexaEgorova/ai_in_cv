@@ -78,9 +78,9 @@ class Horizon:
         roads = lines[(lines[:, 0] < right_threshold) &
                       (lines[:, 0] > left_threshold) &
                       (lines[:, 2] < right_threshold) &
-                      (lines[:, 2] > 300)]
+                      (lines[:, 2] > left_threshold)]
 
-        # Нахождение точек пересечения линий с линией потенциального горизонта
+        # Массив точек пересечения линий, оставшихся после отсеивания
         intersection_points = self.get_intersection_points(roads, img)
 
         if not intersection_points:
